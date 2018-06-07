@@ -19,12 +19,12 @@ namespace Completed
 		private Text levelText;									//Text to display current level number.
 		private GameObject levelImage;							//Image to block out level as levels are being set up, background for levelText.
 		private BoardManager boardScript;						//Store a reference to our BoardManager which will set up the level.
-		private int level = 1;									//Current level number, expressed in game as "Day 1".
-		private List<Enemy> enemies;							//List of all Enemy units, used to issue them move commands.
+		public int level;									//Current level number, expressed in game as "Day 1".
+		public List<Enemy> enemies;							//List of all Enemy units, used to issue them move commands.
 		private bool enemiesMoving;								//Boolean to check if enemies are moving.
 		private bool doingSetup = true;							//Boolean to check if we're setting up board, prevent Player from moving during setup.
 		
-		
+		public Image fadeInOutImage;
 		
 		//Awake is always called before any Start functions
 		void Awake()
@@ -51,7 +51,7 @@ namespace Completed
 			boardScript = GetComponent<BoardManager>();
 			
 			//Call the InitGame function to initialize the first level 
-			InitGame();
+			//InitGame();
 		}
 
         //this is called only once, and the paramter tell it to be called only after the scene was loaded
@@ -98,6 +98,9 @@ namespace Completed
 			//Call the SetupScene function of the BoardManager script, pass it current level number.
 			boardScript.SetupScene(level);
 			
+			fadeInOutImage = GameObject.Find("FadeInOutImage").GetComponent<Image>();
+			fadeInOutImage.GetComponent<Animation>().Play("FadeIn");
+			
 		}
 		
 		
@@ -135,6 +138,11 @@ namespace Completed
 		//GameOver is called when the player reaches 0 food points
 		public void GameOver()
 		{
+			levelImage.GetComponent<Image>().color = new Color(1,1,1,1);
+			levelText.GetComponent<Text>().color = new Color(1,1,1,1);
+
+			levelImage.GetComponent<Animation>().enabled = false;
+			levelText.GetComponent<Animation>().enabled = false;
 			//Set levelText to display number of levels passed and game over message
 			levelText.text = "After " + level + " days, you starved.";
 			

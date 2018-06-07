@@ -9,8 +9,8 @@ namespace Completed
 	public class Player : MovingObject
 	{
 		public float restartLevelDelay = 1f;		//Delay time in seconds to restart level.
-		public int pointsPerFood = 10;				//Number of points to add to player food points when picking up a food object.
-		public int pointsPerSoda = 20;				//Number of points to add to player food points when picking up a soda object.
+		public int pointsWonPerBlueBerries = 10;				//Number of points to add to player food points when picking up a food object.
+		public int pointsLostPerRedBerries = 20;				//Number of points to add to player food points when picking up a soda object.
 		public int wallDamage = 1;					//How much damage a player does to a wall when chopping it.
 
         public int enemyDamage = 1;
@@ -25,15 +25,21 @@ namespace Completed
 		public AudioClip gameOverSound;				//Audio clip to play when player dies.
 		
 		private Animator animator;					//Used to store a reference to the Player's animator component.
-		private int food;                           //Used to store player food points total during level.
+		private float food;                           //Used to store player food points total during level.
 
+		public float maxFood;
         private bool attack;
+
+		public GameObject floorFog;
 
 #if UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_IPHONE
         private Vector2 touchOrigin = -Vector2.one;	//Used to store location of screen touch origin for mobile controls.
 #endif
+
+		public Vector2 playerPosition = new Vector2(0,0);
 		
 		
+		public Image foodSliderFill;
 		//Start overrides the Start function of MovingObject
 		protected override void Start ()
 		{
@@ -55,7 +61,7 @@ namespace Completed
 		private void OnDisable ()
 		{
 			//When Player object is disabled, store the current local food total in the GameManager so it can be re-loaded in next level.
-			GameManager.instance.playerFoodPoints = food;
+			GameManager.instance.playerFoodPoints = (int) food;
 		}
 		
 		
@@ -132,7 +138,7 @@ namespace Completed
 			{
 				//Call AttemptMove passing in the generic parameter Wall, since that is what Player may interact with if they encounter one (by attacking it)
 				//Pass in horizontal and vertical as parameters to specify the direction to move Player in.
-				AttemptMove<Wall> (horizontal, vertical);
+				AttemptMove<MovingObject> (horizontal, vertical);
 			}
 		}
 
@@ -151,6 +157,8 @@ namespace Completed
 			
 			//Update food text display to reflect current score.
 			foodText.text = "Food: " + food;
+
+			foodSliderFill.fillAmount = food/maxFood;
 			
 			//Call the AttemptMove method of the base class, passing in the component T (in this case Wall) and x and y direction to move.
 			base.AttemptMove <T> (xDir, yDir);
@@ -161,6 +169,8 @@ namespace Completed
 			//If Move returns true, meaning Player was able to move into an empty space.
 			if (Move (xDir, yDir, out hit)) 
 			{
+				playerPosition += new Vector2(xDir,0);
+				playerPosition += new Vector2(0,yDir);
 				//Call RandomizeSfx of SoundManager to play the move sound, passing in two audio clips to choose from.
 				SoundManager.instance.RandomizeSfx (moveSound1, moveSound2);
 			}
@@ -171,20 +181,32 @@ namespace Completed
 			//Set the playersTurn boolean of GameManager to false now that players turn is over.
 			GameManager.instance.playersTurn = false;
 		}
-		
-		
+	
 		//OnCantMove overrides the abstract function OnCantMove in MovingObject.
 		//It takes a generic parameter T which in the case of Player is a Wall which the player can attack and destroy.
 		protected override void OnCantMove <T> (T component)
 		{
-			//Set hitWall to equal the component passed in as a parameter.
-			Wall hitWall = component as Wall;
+
+			if(component ==  component as Wall)
+			{
+				//Set hitWall to equal the component passed in as a parameter.
+				Wall hitWall = component as Wall;
+				
+				//Call the DamageWall function of the Wall we are hitting.
+				hitWall.DamageWall (wallDamage);
+				
+				//Set the attack trigger of the player's animation controller in order to play the player's attack animation.
+				animator.SetTrigger ("playerChop");
+			}
+			else if(component == component as Enemy)
+			{
+				Enemy hitEnemy = component as Enemy;
+
+				hitEnemy.Kill();
+				
+				animator.SetTrigger("playerChop");
+			}
 			
-			//Call the DamageWall function of the Wall we are hitting.
-			hitWall.DamageWall (wallDamage);
-			
-			//Set the attack trigger of the player's animation controller in order to play the player's attack animation.
-			animator.SetTrigger ("playerChop");
 
         }
 		
@@ -215,16 +237,25 @@ namespace Completed
 				
 				//Disable the player object since level is over.
 				enabled = false;
+
+				GameManager.instance.fadeInOutImage.GetComponent<Animation>().Play("FadeOut");
 			}
 			
 			//Check if the tag of the trigger collided with is Food.
-			else if(other.tag == "Food")
+			else if(other.tag == "Blue")
 			{
 				//Add pointsPerFood to the players current food total.
-				food += pointsPerFood;
+				food += pointsWonPerBlueBerries;
 				
+				if(food > maxFood)
+				{
+					food = maxFood;
+				}
+
+				foodSliderFill.fillAmount = food/maxFood;
+
 				//Update foodText to represent current total and notify player that they gained points
-				foodText.text = "+" + pointsPerFood + " Food: " + food;
+				foodText.text = "+" + pointsWonPerBlueBerries + " Food: " + food;
 				
 				//Call the RandomizeSfx function of SoundManager and pass in two eating sounds to choose between to play the eating sound effect.
 				SoundManager.instance.RandomizeSfx (eatSound1, eatSound2);
@@ -234,20 +265,23 @@ namespace Completed
 			}
 			
 			//Check if the tag of the trigger collided with is Soda.
-			else if(other.tag == "Soda")
+			else if(other.tag == "Red")
 			{
 				//Add pointsPerSoda to players food points total
-				food += pointsPerSoda;
+				food -= pointsLostPerRedBerries;
 				
+				foodSliderFill.fillAmount = food/maxFood;
+
 				//Update foodText to represent current total and notify player that they gained points
-				foodText.text = "+" + pointsPerSoda + " Food: " + food;
+				foodText.text = "-" + pointsLostPerRedBerries + " Food: " + food;
 				
 				//Call the RandomizeSfx function of SoundManager and pass in two drinking sounds to choose between to play the drinking sound effect.
-				SoundManager.instance.RandomizeSfx (drinkSound1, drinkSound2);
+				SoundManager.instance.RandomizeSfx (eatSound1, eatSound2);
 				
 				//Disable the soda object the player collided with.
 				other.gameObject.SetActive (false);
 			}
+			
 		}
 		
 		
@@ -256,7 +290,7 @@ namespace Completed
 		{
 			//Load the last scene loaded, in this case Main, the only scene in the game. And we load it in "Single" mode so it replace the existing one
             //and not load all the scene object in the current scene.
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
+            SceneManager.LoadScene(1, LoadSceneMode.Single);
 		}
 		
 		
@@ -269,7 +303,7 @@ namespace Completed
 			
 			//Subtract lost food points from the players total.
 			food -= loss;
-			
+			foodSliderFill.fillAmount = food/maxFood;
 			//Update the food display with the new total.
 			foodText.text = "-"+ loss + " Food: " + food;
 			

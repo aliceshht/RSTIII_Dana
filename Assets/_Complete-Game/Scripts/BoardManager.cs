@@ -25,9 +25,11 @@ namespace Completed
 			}
 		}
 		
+		public static BoardManager instance;
+		void Awake(){instance = this;}
 		
-		public int columns = 8; 										//Number of columns in our game board.
-		public int rows = 8;											//Number of rows in our game board.
+		public int columns = 16; 										//Number of columns in our game board.
+		public int rows = 8;												//Number of rows in our game board.
 		public Count wallCount = new Count (5, 9);						//Lower and upper limit for our random number of walls per level.
 		public Count foodCount = new Count (1, 5);						//Lower and upper limit for our random number of food items per level.
 		public GameObject exit;											//Prefab to spawn for exit.
@@ -38,9 +40,18 @@ namespace Completed
 		public GameObject[] outerWallTiles;								//Array of outer tile prefabs.
 		
 		private Transform boardHolder;									//A variable to store a reference to the transform of our Board object.
-		private List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
+		public List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
 		
 		
+		private int chanceOfGettingThreeExits = 25;
+
+		public GameObject[,] grid = new GameObject[16,8];
+		public List<GameObject> gridList;
+
+		public void Kill()
+		{
+			
+		}
 		//Clears our list gridPositions and prepares it to generate a new board.
 		void InitialiseList ()
 		{
@@ -59,7 +70,10 @@ namespace Completed
 			}
 		}
 		
-		
+		void PlaceTwoExits(int x, int y, GameObject toInstantiate)
+		{
+			
+		}
 		//Sets up the outer walls and floor (background) of the game board.
 		void BoardSetup ()
 		{
@@ -77,16 +91,87 @@ namespace Completed
 					
 					//Check if we current position is at board edge, if so choose a random outer wall prefab from our array of outer wall tiles.
 					if(x == -1 || x == columns || y == -1 || y == rows)
-						toInstantiate = outerWallTiles [Random.Range (0, outerWallTiles.Length)];
-					
-					//Instantiate the GameObject instance using the prefab chosen for toInstantiate at the Vector3 corresponding to current grid position in loop, cast it to GameObject.
-					GameObject instance =
-						Instantiate (toInstantiate, new Vector3 (x, y, 0f), Quaternion.identity) as GameObject;
-					
+					{
+						int randomNumber = Random.Range(1,100);
+
+						if(randomNumber >= 100-chanceOfGettingThreeExits)
+						{
+							//Top path
+							if(x== columns/2 && y == rows)
+							{
+								//Place the exit in this path
+								Instantiate (exit, new Vector3 (x, y, 0f), Quaternion.identity);
+							}
+							//Right path
+							else if(x == columns && y == rows/2)
+							{
+								//Place the exit in this path							
+								Instantiate (exit, new Vector3 (x, y, 0f), Quaternion.identity);
+							}
+
+							//left path
+							else if(x == -1 && y == rows/2)
+							{
+								Instantiate (exit, new Vector3 (x, y, 0f), Quaternion.identity);								
+							}
+							else
+							{
+								toInstantiate = outerWallTiles [Random.Range (0, outerWallTiles.Length)];	
+							}	
+						}
+						else
+						{
+							//Top path
+							if(x== columns/2 && y == rows)
+							{
+								//Place the exit in this path
+								Instantiate (exit, new Vector3 (x, y, 0f), Quaternion.identity);
+							}
+							//Right path
+							else if(x == columns && y == rows/2)
+							{
+								//Place the exit in this path							
+								Instantiate (exit, new Vector3 (x, y, 0f), Quaternion.identity);
+							}
+							else
+							{
+								toInstantiate = outerWallTiles [Random.Range (0, outerWallTiles.Length)];	
+								
+							}
+						}
+						
+					}
+					else
+					{
+					}
+
+					GameObject instance = Instantiate (toInstantiate, new Vector3 (x, y, 0f), Quaternion.identity) as GameObject;
+					if(x == -1 || x == columns || y == -1 || y == rows)
+					{
+					}else
+					{
+						grid[x,y] = instance;
+
+					}
 					//Set the parent of our newly instantiated object instance to boardHolder, this is just organizational to avoid cluttering hierarchy.
 					instance.transform.SetParent (boardHolder);
+					
+					//Instantiate the GameObject instance using the prefab chosen for toInstantiate at the Vector3 corresponding to current grid position in loop, cast it to GameObject.
+					
 				}
 			}
+
+			Debug.Log(grid.Length);
+			
+			for(int i = 0; i<8; i++)
+			{
+				for(int j = 0; j<8; j++)
+				{
+					Debug.Log(grid[i,j].transform.position);
+				}
+			}
+			
+			
 		}
 		
 		
@@ -150,7 +235,7 @@ namespace Completed
 			LayoutObjectAtRandom (enemyTiles, enemyCount, enemyCount);
 			
 			//Instantiate the exit tile in the upper right hand corner of our game board
-			Instantiate (exit, new Vector3 (columns - 1, rows - 1, 0f), Quaternion.identity);
+			
 		}
 	}
 }

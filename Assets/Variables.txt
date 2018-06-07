@@ -1,0 +1,8 @@
+To change from the editor
+
+    * Max amount of food the player can pick up:
+        Player -> Max Food
+
+    * Food gain / loss by berries:
+        Player -> Points won per blue berries
+        Player -> Points lost per blue berries

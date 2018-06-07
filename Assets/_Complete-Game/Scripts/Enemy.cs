@@ -20,6 +20,12 @@ namespace Completed
         public Sprite dmgSprite;
         private SpriteRenderer spriteRenderer;
 
+
+		public void Kill()
+		{
+			GameManager.instance.enemies.Remove(this);
+			Destroy(gameObject);
+		}
         //Start overrides the virtual Start function of the base class.
         protected override void Start ()
 		{

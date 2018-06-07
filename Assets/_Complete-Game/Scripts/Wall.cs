@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Completed
 {
-	public class Wall : MonoBehaviour
+	public class Wall : MovingObject
 	{
 		public AudioClip chopSound1;				//1 of 2 audio clips that play when the wall is attacked by the player.
 		public AudioClip chopSound2;				//2 of 2 audio clips that play when the wall is attacked by the player.
@@ -13,7 +13,8 @@ namespace Completed
 		
 		private SpriteRenderer spriteRenderer;		//Store a component reference to the attached SpriteRenderer.
 		
-		
+		 protected override void AttemptMove <T> (int xDir, int yDir){}
+		 protected override void OnCantMove <T> (T component){}
 		void Awake ()
 		{
 			//Get a component reference to the SpriteRenderer.
