@@ -82,6 +82,7 @@ namespace Completed
 			
 			//Get a reference to our text LevelText's text component by finding it by name and calling GetComponent.
 			levelText = GameObject.Find("LevelText").GetComponent<Text>();
+			levelText.fontSize = 56;			
 			
 			//Set the text of levelText to the string "Day" and append the current level number.
 			levelText.text = "Day " + level;
@@ -144,8 +145,8 @@ namespace Completed
 			levelImage.GetComponent<Animation>().enabled = false;
 			levelText.GetComponent<Animation>().enabled = false;
 			//Set levelText to display number of levels passed and game over message
-			levelText.text = "After " + level + " days, you starved.";
-			
+			levelText.text = "After " + level + " days, your journey still continues";
+			levelText.fontSize = 30;			
 			//Enable black background image gameObject.
 			levelImage.SetActive(true);
 			
